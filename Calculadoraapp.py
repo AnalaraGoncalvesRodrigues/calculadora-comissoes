@@ -71,8 +71,10 @@ else:
             if negociador:
                 comissao_corretor += comissao_imobiliaria * 0.30
 
-        st.success(f"Comissão da Imobiliária: R$ {comissao_imobiliaria:.2f}")
-        st.success(f"Comissão do Corretor ({corretor}): R$ {comissao_corretor:.2f}")
+        # --- Exibir valores ---
+        st.info(f"💵 Valor total considerado: R$ {valor:.2f}")
+        st.success(f"🏢 Imobiliária: R$ {comissao_imobiliaria - comissao_corretor:.2f}")
+        st.success(f"👤 Corretor ({corretor}): R$ {comissao_corretor:.2f}")
 
         # --- Gerar PDF ---
         pdf = FPDF()
@@ -83,8 +85,8 @@ else:
         pdf.cell(200, 10, f"Corretor: {corretor}", ln=True)
         pdf.cell(200, 10, f"Tipo de negociação: {tipo}", ln=True)
         pdf.cell(200, 10, f"Valor: R$ {valor:.2f}", ln=True)
-        pdf.cell(200, 10, f"Comissão da imobiliária: R$ {comissao_imobiliaria:.2f}", ln=True)
-        pdf.cell(200, 10, f"Comissão do corretor: R$ {comissao_corretor:.2f}", ln=True)
+        pdf.cell(200, 10, f"Imobiliária: R$ {comissao_imobiliaria - comissao_corretor:.2f}", ln=True)
+        pdf.cell(200, 10, f"Corretor ({corretor}): R$ {comissao_corretor:.2f}", ln=True)
 
         pdf_file = "resumo_comissao.pdf"
         pdf.output(pdf_file)
