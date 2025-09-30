@@ -1,4 +1,5 @@
 import streamlit as st
+st.image("https://widesysw1489.s3.sa-east-1.amazonaws.com/images/logo-site.png", width=200)
 from fpdf import FPDF
 
 # Lista inicial de corretores
