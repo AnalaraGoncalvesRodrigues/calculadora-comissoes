@@ -1,51 +1,67 @@
 import streamlit as st
-st.image("https://widesysw1489.s3.sa-east-1.amazonaws.com/images/logo-site.png", width=200)
+import pandas as pd
+import plotly.express as px
 from fpdf import FPDF
+
+# Configuração inicial
+st.set_page_config(page_title="Dashboard Grupo Gonçalves", page_icon="🏢", layout="wide")
+
+# Logo e título
+st.image("https://widesysw1489.s3.sa-east-1.amazonaws.com/images/logo-site.png", width=180)
+st.markdown("<h2 style='text-align:center; color:#2E4053;'>📊 Painel de Controle - Grupo Gonçalves</h2>", unsafe_allow_html=True)
+st.markdown("---")
 
 # Lista inicial de corretores
 if "corretores" not in st.session_state:
     st.session_state.corretores = ["Isabela", "Rovilson", "Telma", "Denise"]
 
-st.set_page_config(page_title="Calculadora de Comissões", page_icon="💰")
+# Menu lateral
+menu = st.sidebar.radio("Navegação", ["Visão Geral", "Atendimentos", "Visitas", "Propostas", "Calculadora", "Gerenciar Corretores", "Regras"])
 
-# --- Menu lateral ---
-menu = st.sidebar.radio("Navegação", ["Calculadora", "Regras", "Gerenciar Corretores"])
+# --- Dados fictícios (pode depois puxar de Excel/BD) ---
+dados = pd.DataFrame({
+    "Corretor": ["Isabela", "Rovilson", "Telma", "Denise"],
+    "Atendimentos": [12, 18, 9, 14],
+    "Visitas": [5, 7, 3, 6],
+    "Propostas": [2, 3, 1, 2],
+    "Comissão": [3200, 4700, 1800, 2500]
+})
 
-# --- Página de regras ---
-if menu == "Regras":
-    st.title("📘 Regras de Comissão")
-    st.subheader("Locação")
-    st.write("""
-    - Captador: **15%** do valor do 1º aluguel (100% vai para a imobiliária).  
-    - Negociador: **30%** do valor do 1º aluguel.
-    """)
-    st.subheader("Venda")
-    st.write("""
-    - Comissão da imobiliária: **6%** sobre o valor do imóvel.  
-    - Captador: **10%** da comissão da imobiliária.  
-    - Negociador: **35%** da comissão da imobiliária.
-    """)
+# --- Página Visão Geral ---
+if menu == "Visão Geral":
+    st.subheader("📈 Resumo Geral")
+    col1, col2 = st.columns(2)
 
-# --- Página de gerenciamento ---
-elif menu == "Gerenciar Corretores":
-    st.title("👥 Gerenciar Corretores")
+    with col1:
+        st.metric("Total de Atendimentos", dados["Atendimentos"].sum())
+        st.metric("Total de Visitas", dados["Visitas"].sum())
 
-    novo = st.text_input("Adicionar novo corretor:")
-    if st.button("Adicionar"):
-        if novo and novo not in st.session_state.corretores:
-            st.session_state.corretores.append(novo)
-            st.success(f"Corretor {novo} adicionado com sucesso!")
+    with col2:
+        st.metric("Total de Propostas", dados["Propostas"].sum())
+        st.metric("Total de Comissões (R$)", dados["Comissão"].sum())
 
-    remover = st.selectbox("Remover corretor:", st.session_state.corretores)
-    if st.button("Remover"):
-        st.session_state.corretores.remove(remover)
-        st.success(f"Corretor {remover} removido com sucesso!")
+    st.markdown("### Gráfico de Comissões por Corretor")
+    fig = px.bar(dados, x="Corretor", y="Comissão", color="Corretor", text_auto=True)
+    st.plotly_chart(fig, use_container_width=True)
 
-    st.write("Corretores atuais:", st.session_state.corretores)
+# --- Página Atendimentos ---
+elif menu == "Atendimentos":
+    st.subheader("📞 Atendimentos")
+    st.dataframe(dados[["Corretor", "Atendimentos"]])
 
-# --- Página principal (Calculadora) ---
-else:
-    st.title("💰 Calculadora de Comissões")
+# --- Página Visitas ---
+elif menu == "Visitas":
+    st.subheader("🏠 Visitas")
+    st.dataframe(dados[["Corretor", "Visitas"]])
+
+# --- Página Propostas ---
+elif menu == "Propostas":
+    st.subheader("📝 Propostas")
+    st.dataframe(dados[["Corretor", "Propostas"]])
+
+# --- Página Calculadora ---
+elif menu == "Calculadora":
+    st.subheader("💰 Calculadora de Comissões")
 
     corretor = st.selectbox("Selecione o corretor", st.session_state.corretores)
     tipo = st.radio("Tipo de negociação", ["Venda", "Locação"])
@@ -71,12 +87,12 @@ else:
             if negociador:
                 comissao_corretor += comissao_imobiliaria * 0.30
 
-        # --- Exibir valores ---
+        # Exibir resultados
         st.info(f"💵 Valor total considerado: R$ {valor:.2f}")
         st.success(f"🏢 Imobiliária: R$ {comissao_imobiliaria - comissao_corretor:.2f}")
         st.success(f"👤 Corretor ({corretor}): R$ {comissao_corretor:.2f}")
 
-        # --- Gerar PDF ---
+        # PDF
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
@@ -93,3 +109,34 @@ else:
 
         with open(pdf_file, "rb") as file:
             st.download_button("📥 Baixar PDF", file, file_name=pdf_file, mime="application/pdf")
+
+# --- Página Gerenciar Corretores ---
+elif menu == "Gerenciar Corretores":
+    st.subheader("👥 Gerenciar Corretores")
+
+    novo = st.text_input("Adicionar novo corretor:")
+    if st.button("Adicionar"):
+        if novo and novo not in st.session_state.corretores:
+            st.session_state.corretores.append(novo)
+            st.success(f"Corretor {novo} adicionado com sucesso!")
+
+    remover = st.selectbox("Remover corretor:", st.session_state.corretores)
+    if st.button("Remover"):
+        st.session_state.corretores.remove(remover)
+        st.success(f"Corretor {remover} removido com sucesso!")
+
+    st.write("Corretores atuais:", st.session_state.corretores)
+
+# --- Página Regras ---
+elif menu == "Regras":
+    st.subheader("📘 Regras de Comissão")
+    st.write("""
+    ### Locação
+    - Captador: **15%** do valor do 1º aluguel (100% vai para a imobiliária).  
+    - Negociador: **30%** do valor do 1º aluguel.
+
+    ### Venda
+    - Comissão da imobiliária: **6%** sobre o valor do imóvel.  
+    - Captador: **10%** da comissão da imobiliária.  
+    - Negociador: **35%** da comissão da imobiliária.
+    """)
