@@ -3,3 +3,4 @@ fpdf==1.7.2
 plotly==5.17.0
 pandas==2.1.1
 numpy==1.26.0
+
